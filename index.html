@@ -7,6 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learn WGPU</title>
     <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         canvas {
             background-color: black;
         }
@@ -14,13 +21,12 @@
 </head>
 
 <body id="wasm-example">
-<h1> Hello gamers, mouse over the square below to see the funny colors</h1>
-<script type="module">
-      import init from "./pkg/rust_wgpu.js";
-      init().then(() => {
-          console.log("WASM Loaded");
-      });
-  </script>
+    <script type="module">
+        import init from "./pkg/rust_wgpu.js";
+        init().then(() => {
+            console.log("WASM Loaded");
+        });
+    </script>
 </body>
 
 </html>
