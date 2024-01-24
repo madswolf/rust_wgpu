@@ -1,4 +1,4 @@
-name: Wam-pack
+name: Build
 
 defaults:
   run:
