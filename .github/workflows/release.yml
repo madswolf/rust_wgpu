@@ -1,0 +1,38 @@
+name: Release
+on:
+  workflow_run:
+    workflows: ["Build"]
+    branches: [main]
+    types: 
+      - completed
+
+    
+jobs: 
+    build:
+  
+      runs-on: ubuntu-latest
+  
+      steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Build
+        run: wasm-pack build --target web
+      - name: Release html
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}        
+          key: ${{secrets.ACTIONS_SSH_KEY_PRIVATE}}
+          username: ${{secrets.SSH_HOST_USERNAME}}
+          source: "index.html"
+          target: ${{secrets.RELEASE_FOLDER}}/
+      - name: Release html
+        uses: appleboy/scp-action@v0.1.7
+        with:
+            host: ${{ secrets.HOST }}        
+            key: ${{secrets.ACTIONS_SSH_KEY_PRIVATE}}
+            username: ${{secrets.SSH_HOST_USERNAME}}
+            source: "pkg/"
+            target: ${{secrets.RELEASE_FOLDER}}/
+              
