@@ -51,12 +51,19 @@ struct State {
     render_pipeline: wgpu::RenderPipeline,
     color_render_pipeline: wgpu::RenderPipeline,
     use_color: bool,
+    use_funny: bool,
 
     vertex_buffer: wgpu::Buffer,
     num_vertices: u32,
 
     index_buffer: wgpu::Buffer,
     num_indices: u32,
+    
+    funny_vertex_buffer: wgpu::Buffer,
+    funny_num_vertices: u32,
+
+    funny_index_buffer: wgpu::Buffer,
+    funny_num_indices: u32,
 }
 
 
@@ -225,6 +232,26 @@ impl State {
 
         let num_indices = INDICES.len() as u32;
 
+        let funny_vertex_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex buffer"),
+                contents: bytemuck::cast_slice(FUNNY_VERTICES),
+                usage: wgpu::BufferUsages::VERTEX
+            }
+        );
+
+        let funny_index_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(FUNNY_INDICES),
+                usage: wgpu::BufferUsages::INDEX,
+            }
+        );
+
+        let funny_num_vertices = VERTICES.len() as u32;
+
+        let funny_num_indices = FUNNY_INDICES.len() as u32;
+
         Self {
             window,
             surface,
@@ -235,13 +262,19 @@ impl State {
             size,
             render_pipeline,
             color_render_pipeline,
-            use_color:false,
+            use_color:true,
+            use_funny:false,
 
             vertex_buffer,
             num_vertices,
 
             index_buffer,
             num_indices,
+
+            funny_vertex_buffer,
+            funny_index_buffer,
+            funny_num_indices,
+            funny_num_vertices,
         }
     }
 
@@ -275,6 +308,10 @@ impl State {
                         self.use_color = !self.use_color;
                         true
                     },
+                    Some(VirtualKeyCode::F) => {
+                        self.use_funny = !self.use_funny;
+                        true
+                    }
                     _ => false
                 }
             }
@@ -317,7 +354,13 @@ impl State {
                 timestamp_writes: None,
             });
         
-            if self.use_color {
+            if self.use_funny {
+                render_pass.set_pipeline(&self.color_render_pipeline);
+                render_pass.set_vertex_buffer(0, self.funny_vertex_buffer.slice(..));
+                render_pass.set_index_buffer(self.funny_index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                
+                render_pass.draw_indexed(0..self.funny_num_indices, 0, 0..1);
+            } else if self.use_color {
                 render_pass.set_pipeline(&self.color_render_pipeline);
                 render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
@@ -341,7 +384,7 @@ impl State {
 }
 
 
-const VERTICES: &[Vertex] = &[
+const FUNNY_VERTICES: &[Vertex] = &[
 
     //L
     Vertex { position: [0.05, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
@@ -377,7 +420,7 @@ const VERTICES: &[Vertex] = &[
 
 ];
 
-const INDICES: &[u16] = &[
+const FUNNY_INDICES: &[u16] = &[
     //L
     6, 1, 0,
     6, 2, 1,
@@ -399,6 +442,22 @@ const INDICES: &[u16] = &[
     25,23,22,
     25,24,23,
     ];
+
+const VERTICES: &[Vertex] = &[
+    Vertex { position: [-0.0868241, 0.49240386, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [-0.49513406, 0.06958647, 0.0], color: [1.0, 1.0, 0.5] },
+    Vertex { position: [-0.21918549, -0.44939706, 0.0], color: [0.0, 1.0, 0.0] },
+    Vertex { position: [0.35966998, -0.3473291, 0.0], color: [0.0, 1.0, 1.0] },
+    Vertex { position: [0.44147372, 0.2347359, 0.0], color: [0.0, 0.0, 1.0] },
+];
+
+
+const INDICES: &[u16] = &[
+    0, 1, 4,
+    1, 2, 4,
+    2, 3, 4,
+];
+
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
