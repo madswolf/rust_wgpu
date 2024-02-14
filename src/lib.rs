@@ -1,3 +1,5 @@
+use std::f32::INFINITY;
+
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -47,10 +49,14 @@ struct State {
     // unsafe references to the window's resources.
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,
     color_render_pipeline: wgpu::RenderPipeline,
     use_color: bool,
+
+    vertex_buffer: wgpu::Buffer,
     num_vertices: u32,
+
+    index_buffer: wgpu::Buffer,
+    num_indices: u32,
 }
 
 
@@ -207,7 +213,17 @@ impl State {
             }
         );
 
+        let index_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(INDICES),
+                usage: wgpu::BufferUsages::INDEX,
+            }
+        );
+
         let num_vertices = VERTICES.len() as u32;
+
+        let num_indices = INDICES.len() as u32;
 
         Self {
             window,
@@ -220,8 +236,12 @@ impl State {
             render_pipeline,
             color_render_pipeline,
             use_color:false,
+
             vertex_buffer,
-            num_vertices
+            num_vertices,
+
+            index_buffer,
+            num_indices,
         }
     }
 
@@ -299,13 +319,18 @@ impl State {
         
             if self.use_color {
                 render_pass.set_pipeline(&self.color_render_pipeline);
-            } else {
-                render_pass.set_pipeline(&self.render_pipeline); // 2.
-            }
-
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.draw(0..self.num_vertices, 0..1); // 3.
+                render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+                render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                
+                render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
     
+            } else {
+                render_pass.set_pipeline(&self.render_pipeline);
+                render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+                
+                render_pass.draw(0..self.num_vertices, 0..1);
+    
+            }    
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -315,11 +340,65 @@ impl State {
     }
 }
 
+
 const VERTICES: &[Vertex] = &[
-    Vertex { position: [0.0, 0.5, 0.0], color: [1.0, 0.0, 0.0]},
-    Vertex { position: [-0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0]},
-    Vertex { position: [0.5, -0.5, 0.0], color: [0.0, 0.0, 1.0]},
+
+    //L
+    Vertex { position: [0.05, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.15, -0.10, 0.0], color: [1.0, 1.0, 0.5] },
+    Vertex { position: [0.15, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.25, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.25, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.05, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.05, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+
+    //O
+    Vertex { position: [0.40, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.40, -0.20, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.60, -0.20, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.60, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.70, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.70, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.60, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.60, -0.80, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.40, -0.80, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.40, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.30, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.30, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+
+    //L2
+    Vertex { position: [0.05 + 0.7, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.15 + 0.7, -0.10, 0.0], color: [1.0, 1.0, 0.5] },
+    Vertex { position: [0.15 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.25 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.25 + 0.7, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.05 + 0.7, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.05 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+
 ];
+
+const INDICES: &[u16] = &[
+    //L
+    6, 1, 0,
+    6, 2, 1,
+    3, 6, 5,
+    5, 4, 3,
+
+    9,8,7,
+    7,10,9,
+    12,11,10,
+    10,13,12,
+    13,15,14,
+    13,16,15,
+    16,18,17,
+    16,7,18,
+
+    //L2
+    19,21,20,
+    19,25,21,
+    25,23,22,
+    25,24,23,
+    ];
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
