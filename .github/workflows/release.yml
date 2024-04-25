@@ -18,21 +18,10 @@ jobs:
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - name: Build
-        run: wasm-pack build --target web
-      - name: Release html
-        uses: appleboy/scp-action@v0.1.7
+        run: wasm-pack build --target web --out-dir build
+      - name: Commit build to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          host: ${{ secrets.HOST }}        
-          key: ${{secrets.ACTIONS_SSH_KEY_PRIVATE}}
-          username: ${{secrets.SSH_HOST_USERNAME}}
-          source: "index.html"
-          target: ${{secrets.RELEASE_FOLDER}}/
-      - name: Release html
-        uses: appleboy/scp-action@v0.1.7
-        with:
-            host: ${{ secrets.HOST }}        
-            key: ${{secrets.ACTIONS_SSH_KEY_PRIVATE}}
-            username: ${{secrets.SSH_HOST_USERNAME}}
-            source: "pkg/"
-            target: ${{secrets.RELEASE_FOLDER}}/
+          branch: gh-pages
+          folder: build
               
