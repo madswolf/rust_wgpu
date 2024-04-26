@@ -21,7 +21,10 @@ jobs:
       
       - name: Build
         run: wasm-pack build --target web --out-dir build
-      
+
+      - name: Wasm-pack workaround
+        run: rm build/.gitignore
+        
       - name: Commit new build to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
