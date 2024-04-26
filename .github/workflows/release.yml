@@ -22,9 +22,12 @@ jobs:
       - name: Build
         run: wasm-pack build --target web --out-dir build
 
+      - name: Add index.html to build folder for publishing
+        run: cp index.html build/
+
       - name: Wasm-pack workaround
         run: rm build/.gitignore
-        
+
       - name: Commit new build to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
