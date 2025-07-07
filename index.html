@@ -23,7 +23,7 @@
 <body id="wasm-example">
     <canvas id="canvas"></canvas>
     <script type="module">
-        import init from "./build/rust_wgpu.js";
+        import init from "./rust_wgpu.js";
         init().then(() => {
             console.log("WASM Loaded");
         });
