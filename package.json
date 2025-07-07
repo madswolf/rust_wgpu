@@ -1,12 +1,13 @@
 {
   "name": "rust_wgpu",
-  "version": "0.1.0",
+  "type": "module",
+  "version": "0.2.0",
   "files": [
     "rust_wgpu_bg.wasm",
     "rust_wgpu.js",
     "rust_wgpu.d.ts"
   ],
-  "module": "rust_wgpu.js",
+  "main": "rust_wgpu.js",
   "types": "rust_wgpu.d.ts",
   "sideEffects": [
     "./snippets/*"

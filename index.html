@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn WGPU</title>
+    <title>WebGPU project</title>
     <style>
         body {
             margin: 0;
@@ -21,8 +21,9 @@
 </head>
 
 <body id="wasm-example">
+    <canvas id="canvas"></canvas>
     <script type="module">
-        import init from "./rust_wgpu.js";
+        import init from "./build/rust_wgpu.js";
         init().then(() => {
             console.log("WASM Loaded");
         });
