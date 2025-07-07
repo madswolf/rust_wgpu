@@ -7,15 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebGPU project</title>
     <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        html, body {
+          margin: 0;
+          padding: 0;
+          height: 100%;
         }
         canvas {
-            background-color: black;
+          display: block;
+          width: 100vw;
+          height: 100vh;
+          background-color: black;
         }
     </style>
 </head>
@@ -23,6 +24,11 @@
 <body id="wasm-example">
     <canvas id="canvas"></canvas>
     <script type="module">
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "F12") {
+                e.preventDefault = () => {};
+            }
+        }, true);
         import init from "./rust_wgpu.js";
         init().then(() => {
             console.log("WASM Loaded");
