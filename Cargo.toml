@@ -1,7 +1,7 @@
 [package]
 name = "rust_wgpu"
-version = "0.1.0"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
 
 
 [lib]
@@ -12,19 +12,24 @@ name = "tutorial1-window"
 path = "src/main.rs"
 
 [dependencies]
-cfg-if = "1"
-winit = "0.28"
+anyhow = "1.0"
+winit = { version = "0.30", features = ["android-native-activity"] }
 env_logger = "0.10"
 log = "0.4"
-wgpu = "0.18"
+wgpu = "25.0"
 pollster = "0.3"
 bytemuck = { version = "1.12", features = [ "derive" ] }
+
+[dependencies.image]
+version = "0.24"
+default-features = false
+features = ["png", "jpeg"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
 console_log = "1.0"
-wgpu = { version = "0.18", features = ["webgl"]}
-wasm-bindgen = "=0.2.87"
+wgpu = { version = "25.0.2", features = ["webgl"]}
+wasm-bindgen = "0.2.88"
 wasm-bindgen-futures = "0.4.30"
 web-sys = { version = "0.3.53", features = [
     "Document",
