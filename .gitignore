@@ -1,3 +1,4 @@
-/target
-pkg
-Cargo.lock
+web/build
+rust/target
+rust/Cargo.lock
+rust/pkg

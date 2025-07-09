@@ -5,7 +5,9 @@ It currently follows the Learn web gpu for rust tutorial.
 
 ## Local development
 
-cargo run start
+Have rust, bacon, wasm-pack, npm and vite installed.
 
-wasm-pack build --target web --out-dir build
-python -m http.server
+Then run these two sets of commands in two terminals:
+
+cd rust && bacon wasm
+cd web && npx vite
