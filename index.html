@@ -29,7 +29,7 @@
                 e.preventDefault = () => {};
             }
         }, true);
-        import init from "./rust_wgpu.js";
+        import init from "./build/rust_wgpu.js";
         init().then(() => {
             console.log("WASM Loaded");
         });
