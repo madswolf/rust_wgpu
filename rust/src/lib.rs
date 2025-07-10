@@ -39,10 +39,78 @@ impl Vertex {
 }
 
 const VERTICES: &[Vertex] = &[
-    Vertex { position: [0.0, 0.5, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [-0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0] },
-    Vertex { position: [0.5, -0.5, 0.0], color: [0.0, 0.0, 1.0] },
+    Vertex { position: [-0.0868241, 0.49240386, 0.0], color: [0.5, 0.0, 0.5] }, // A
+    Vertex { position: [-0.49513406, 0.06958647, 0.0], color: [0.5, 0.0, 0.5] }, // B
+    Vertex { position: [-0.21918549, -0.44939706, 0.0], color: [0.5, 0.0, 0.5] }, // C
+    Vertex { position: [0.35966998, -0.3473291, 0.0], color: [0.5, 0.0, 0.5] }, // D
+    Vertex { position: [0.44147372, 0.2347359, 0.0], color: [0.5, 0.0, 0.5] }, // E
 ];
+
+const INDICES: &[u16] = &[
+    0, 1, 4,
+    1, 2, 4,
+    2, 3, 4,
+];
+
+
+const FUNNY_VERTICES: &[Vertex] = &[
+
+    //L
+    Vertex { position: [0.05, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.15, -0.10, 0.0], color: [1.0, 1.0, 0.5] },
+    Vertex { position: [0.15, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.25, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.25, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.05, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.05, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+
+    //O
+    Vertex { position: [0.40, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.40, -0.20, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.60, -0.20, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.60, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.70, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.70, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.60, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.60, -0.80, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.40, -0.80, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.40, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.30, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.30, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+
+    //L2
+    Vertex { position: [0.05 + 0.7, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.15 + 0.7, -0.10, 0.0], color: [1.0, 1.0, 0.5] },
+    Vertex { position: [0.15 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.25 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.25 + 0.7, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.05 + 0.7, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [0.05 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+
+];
+
+const FUNNY_INDICES: &[u16] = &[
+    //L
+    6, 1, 0,
+    6, 2, 1,
+    3, 6, 5,
+    5, 4, 3,
+
+    9,8,7,
+    7,10,9,
+    12,11,10,
+    10,13,12,
+    13,15,14,
+    13,16,15,
+    16,18,17,
+    16,7,18,
+
+    //L2
+    19,21,20,
+    19,25,21,
+    25,23,22,
+    25,24,23,
+    ];
 
 pub struct State {
     surface: wgpu::Surface<'static>,
@@ -57,7 +125,17 @@ pub struct State {
     use_color: bool,
 
     vertex_buffer: wgpu::Buffer,
-    num_vertices: u32
+    num_vertices: u32,
+
+    index_buffer: wgpu::Buffer,
+    num_indices: u32,
+
+    funny_vertex_buffer: wgpu::Buffer,
+    funny_num_vertices: u32,
+
+    funny_index_buffer: wgpu::Buffer,
+    funny_num_indices: u32,
+    use_funny: bool,
 }
 
 impl State {
@@ -123,7 +201,32 @@ impl State {
                 usage: wgpu::BufferUsages::VERTEX,
             } 
         );
+
+        let index_buffer = device.create_buffer_init(
+           &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(INDICES),
+                usage: wgpu::BufferUsages::INDEX,
+            } 
+        );
+
         
+        let funny_vertex_buffer = device.create_buffer_init(
+           &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(FUNNY_VERTICES),
+                usage: wgpu::BufferUsages::VERTEX,
+            } 
+        );
+
+        let funny_index_buffer = device.create_buffer_init(
+           &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(FUNNY_INDICES),
+                usage: wgpu::BufferUsages::INDEX,
+            } 
+        );
+
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
 
         let render_pipeline_layout =
@@ -223,7 +326,14 @@ impl State {
             color_render_pipeline,
             use_color: false,
             vertex_buffer,
-            num_vertices: VERTICES.len() as u32
+            num_vertices: VERTICES.len() as u32,
+            index_buffer,
+            num_indices: INDICES.len() as u32,
+            funny_vertex_buffer,
+            funny_num_vertices: FUNNY_VERTICES.len() as u32,
+            funny_index_buffer,
+            funny_num_indices: FUNNY_INDICES.len() as u32,
+            use_funny: false
         })
     }
 
@@ -239,7 +349,10 @@ impl State {
     fn handle_key(&mut self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
         match (code, is_pressed) {
             (KeyCode::KeyC, pressed) => {
-                self.use_color = !pressed;
+                self.use_color = pressed;
+            },
+            (KeyCode::KeyF, pressed) => {
+                self.use_funny = pressed;
             },
             (KeyCode::Escape, true) => event_loop.exit(),
             _ => {}
@@ -287,10 +400,17 @@ impl State {
         if self.use_color {
             render_pass.set_pipeline(&self.color_render_pipeline);
             render_pass.draw(0..3, 0..1);
-        } else {
+        } else if self.use_funny {
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.funny_vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.funny_index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.draw_indexed(0..self.funny_num_indices, 0, 0..1);
+        }
+         else {
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.draw(0..self.num_vertices, 0..1);
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
 
         // drop for encoder borrow to end,
