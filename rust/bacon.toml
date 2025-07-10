@@ -107,7 +107,7 @@ allow_warnings = true
 
 [jobs.wasm]
 command = [
-  "wasm-pack", "build", "--target", "web", "--out-dir", "../web/build"
+  "wasm-pack", "build", "--target", "web","--dev", "--out-dir", "../web/build"
 ]
 need_stdout = true
 
