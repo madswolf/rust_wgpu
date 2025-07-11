@@ -1,4 +1,4 @@
-use std::{io::stdout, sync::Arc};
+use std::{fs, io::stdout, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
     application::ApplicationHandler,
@@ -7,6 +7,7 @@ use winit::{
     keyboard::{KeyCode, PhysicalKey},
     window::Window,
 };
+mod texture;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -15,8 +16,9 @@ use wasm_bindgen::prelude::*;
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct Vertex {
     position: [f32; 3],
-    color: [f32; 3],
+    tex_coords: [f32; 2],
 }
+
 impl Vertex {
     fn desc() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
@@ -31,7 +33,7 @@ impl Vertex {
                 wgpu::VertexAttribute {
                     offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
                     shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x3,
+                    format: wgpu::VertexFormat::Float32x2,
                 }
             ]
         }
@@ -39,12 +41,13 @@ impl Vertex {
 }
 
 const VERTICES: &[Vertex] = &[
-    Vertex { position: [-0.0868241, 0.49240386, 0.0], color: [0.5, 0.0, 0.5] }, // A
-    Vertex { position: [-0.49513406, 0.06958647, 0.0], color: [0.5, 0.0, 0.5] }, // B
-    Vertex { position: [-0.21918549, -0.44939706, 0.0], color: [0.5, 0.0, 0.5] }, // C
-    Vertex { position: [0.35966998, -0.3473291, 0.0], color: [0.5, 0.0, 0.5] }, // D
-    Vertex { position: [0.44147372, 0.2347359, 0.0], color: [0.5, 0.0, 0.5] }, // E
+    Vertex { position: [-0.0868241, 0.49240386, 0.0], tex_coords: [0.4131759, 0.00759614], }, // A
+    Vertex { position: [-0.49513406, 0.06958647, 0.0], tex_coords: [0.0048659444, 0.43041354], }, // B
+    Vertex { position: [-0.21918549, -0.44939706, 0.0], tex_coords: [0.28081453, 0.949397], }, // C
+    Vertex { position: [0.35966998, -0.3473291, 0.0], tex_coords: [0.85967, 0.84732914], }, // D
+    Vertex { position: [0.44147372, 0.2347359, 0.0], tex_coords: [0.9414737, 0.2652641], }, // E
 ];
+
 
 const INDICES: &[u16] = &[
     0, 1, 4,
@@ -53,41 +56,41 @@ const INDICES: &[u16] = &[
 ];
 
 
-const FUNNY_VERTICES: &[Vertex] = &[
-
-    //L
-    Vertex { position: [0.05, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.15, -0.10, 0.0], color: [1.0, 1.0, 0.5] },
-    Vertex { position: [0.15, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.25, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.25, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.05, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.05, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
-
-    //O
-    Vertex { position: [0.40, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.40, -0.20, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.60, -0.20, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.60, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.70, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.70, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.60, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.60, -0.80, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.40, -0.80, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.40, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.30, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.30, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
-
-    //L2
-    Vertex { position: [0.05 + 0.7, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.15 + 0.7, -0.10, 0.0], color: [1.0, 1.0, 0.5] },
-    Vertex { position: [0.15 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.25 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.25 + 0.7, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.05 + 0.7, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [0.05 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
-
-];
+//const FUNNY_VERTICES: &[Vertex] = &[
+//
+//    //L
+//    Vertex { position: [0.05, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.15, -0.10, 0.0], color: [1.0, 1.0, 0.5] },
+//    Vertex { position: [0.15, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.25, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.25, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.05, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.05, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+//
+//    //O
+//    Vertex { position: [0.40, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.40, -0.20, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.60, -0.20, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.60, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.70, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.70, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.60, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.60, -0.80, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.40, -0.80, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.40, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.30, -0.70, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.30, -0.30, 0.0], color: [1.0, 0.0, 0.0] },
+//
+//    //L2
+//    Vertex { position: [0.05 + 0.7, -0.10, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.15 + 0.7, -0.10, 0.0], color: [1.0, 1.0, 0.5] },
+//    Vertex { position: [0.15 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.25 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.25 + 0.7, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.05 + 0.7, -0.85, 0.0], color: [1.0, 0.0, 0.0] },
+//    Vertex { position: [0.05 + 0.7, -0.75, 0.0], color: [1.0, 0.0, 0.0] },
+//
+//];
 
 const FUNNY_INDICES: &[u16] = &[
     //L
@@ -130,12 +133,15 @@ pub struct State {
     index_buffer: wgpu::Buffer,
     num_indices: u32,
 
-    funny_vertex_buffer: wgpu::Buffer,
-    funny_num_vertices: u32,
+    //funny_vertex_buffer: wgpu::Buffer,
+    //funny_num_vertices: u32,
 
-    funny_index_buffer: wgpu::Buffer,
-    funny_num_indices: u32,
-    use_funny: bool,
+    //funny_index_buffer: wgpu::Buffer,
+    //funny_num_indices: u32,
+    //use_funny: bool,
+
+    diffuse_bind_group: wgpu::BindGroup,
+    diffuse_texture: texture::Texture,
 }
 
 impl State {
@@ -194,6 +200,58 @@ impl State {
             desired_maximum_frame_latency: 2,
         };
 
+        let diffuse_texture = texture::Texture::from_bytes(
+            &device,
+            &queue,
+            include_bytes!("../happy-tree.png"),
+             "happy-tree.png")
+        .unwrap();
+
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        // This should match the filterable field of the
+                        // corresponding Texture entry above.
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: Some("texture_bind_group_layout"),
+            }
+        );
+
+        let diffuse_bind_group = device.create_bind_group(
+        &wgpu::BindGroupDescriptor {
+            layout: &texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+                }
+            ],
+            label: Some("diffuse_bind_group"),
+        }
+    );
+
+
+
         let vertex_buffer = device.create_buffer_init(
            &wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
@@ -211,13 +269,13 @@ impl State {
         );
 
         
-        let funny_vertex_buffer = device.create_buffer_init(
-           &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(FUNNY_VERTICES),
-                usage: wgpu::BufferUsages::VERTEX,
-            } 
-        );
+        //let funny_vertex_buffer = device.create_buffer_init(
+        //   &wgpu::util::BufferInitDescriptor {
+        //        label: Some("Vertex Buffer"),
+        //        contents: bytemuck::cast_slice(FUNNY_VERTICES),
+        //        usage: wgpu::BufferUsages::VERTEX,
+        //    } 
+        //);
 
         let funny_index_buffer = device.create_buffer_init(
            &wgpu::util::BufferInitDescriptor {
@@ -232,7 +290,7 @@ impl State {
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[],
+                bind_group_layouts: &[&texture_bind_group_layout],
                 push_constant_ranges: &[],
             }
         );
@@ -329,11 +387,13 @@ impl State {
             num_vertices: VERTICES.len() as u32,
             index_buffer,
             num_indices: INDICES.len() as u32,
-            funny_vertex_buffer,
-            funny_num_vertices: FUNNY_VERTICES.len() as u32,
-            funny_index_buffer,
-            funny_num_indices: FUNNY_INDICES.len() as u32,
-            use_funny: false
+            //funny_vertex_buffer,
+            //funny_num_vertices: FUNNY_VERTICES.len() as u32,
+            //funny_index_buffer,
+            //funny_num_indices: FUNNY_INDICES.len() as u32,
+            //use_funny: false,
+            diffuse_bind_group,
+            diffuse_texture
         })
     }
 
@@ -351,9 +411,9 @@ impl State {
             (KeyCode::KeyC, pressed) => {
                 self.use_color = pressed;
             },
-            (KeyCode::KeyF, pressed) => {
-                self.use_funny = pressed;
-            },
+            //(KeyCode::KeyF, pressed) => {
+            //    self.use_funny = pressed;
+            //},
             (KeyCode::Escape, true) => event_loop.exit(),
             _ => {}
         }
@@ -400,14 +460,15 @@ impl State {
         if self.use_color {
             render_pass.set_pipeline(&self.color_render_pipeline);
             render_pass.draw(0..3, 0..1);
-        } else if self.use_funny {
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_vertex_buffer(0, self.funny_vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.funny_index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.funny_num_indices, 0, 0..1);
+        //} else if self.use_funny {
+            //render_pass.set_pipeline(&self.render_pipeline);
+            //render_pass.set_vertex_buffer(0, self.funny_vertex_buffer.slice(..));
+            //render_pass.set_index_buffer(self.funny_index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            //render_pass.draw_indexed(0..self.funny_num_indices, 0, 0..1);
         }
          else {
             render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
